@@ -88,7 +88,6 @@ def main():
     n_test_points = 10000
     results = {}
     test_params = []
-    print("Test input and results setup...\n")
     for i in range(n_test_points):
         n = randint(10, 1000)
         k = randint(1, n)
@@ -102,7 +101,7 @@ def main():
             bi = func(x, y)
             assert(results[(x, y)] == bi)
         duration = time.process_time() - start
-        print("{}\t{}".format(func.__name__, duration))
+        print("{}\t{:.5f}".format(func.__name__, duration))
 
 
 if __name__ == "__main__":
