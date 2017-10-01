@@ -3,6 +3,7 @@ determine the most efficient method (fastest) in python.
 
 """
 
+import logging
 from math import factorial
 from random import randint
 import resource
@@ -91,6 +92,36 @@ def buf_fact(x, y):
 functions_to_be_tested.append(buf_fact)
 
 
+sparse_fact_buffer = {}
+"""buffering factorials like {0: 1, 1: 1, 2: 2, 3: 6, }"""
+
+
+def sparse_buffered_factorial(x):
+    if x in sparse_fact_buffer.keys():
+        return sparse_fact_buffer[x]
+    if not sparse_fact_buffer:
+        sparse_fact_buffer[0] = 1
+    closest = max(y for y in sparse_fact_buffer.keys() if y < x)
+    fact = sparse_fact_buffer[closest]
+    while(closest < x):
+        closest += 1
+        fact *= closest
+        if closest % 100 == 0:
+            sparse_fact_buffer[closest] = fact
+    return fact
+
+
+def sparse_buf_fact(x, y):
+    if y > x or y < 0:
+        return 0
+    return sparse_buffered_factorial(x) // (
+        sparse_buffered_factorial(y)
+        * sparse_buffered_factorial(x - y))
+
+
+functions_to_be_tested.append(sparse_buf_fact)
+
+
 test_to_be_run = []
 results = {}
 
@@ -109,36 +140,56 @@ def generate_tests():
                            [(n, k)]))
     results[(n, k)] = math_fact(n, k)
 
-    test_params = []
     n_test_points = 10000
+    test_params = []
     for i in range(n_test_points):
         n = randint(10, 1000)
         k = randint(1, n)
         test_params.append((n, k))
-        results[(n, k)] = math_fact(n, k)
+        results[(n, k)] = sparse_buf_fact(n, k)
     test_to_be_run.append(("{} evaluations of order 10^3".format(
-        n_test_points, test_params)))
+        n_test_points), test_params))
+
+    n_test_points = 1000
+    test_params.clear()
+    for i in range(n_test_points):
+        n = randint(1000, 10**4)
+        k = randint(1, n)
+        test_params.append((n, k))
+        results[(n, k)] = sparse_buf_fact(n, k)
+    test_to_be_run.append(("{} evaluations of order 10^4".format(
+        n_test_points), test_params))
 
 
 def main():
-    soft, hard = 10**9, 2 * 10**9
+
+    #logging.basicConfig(level=logging.DEBUG)
+
+    soft, hard = 2 * 10**9, 3 * 10**9
     resource.setrlimit(resource.RLIMIT_AS, (soft, hard))
 
     print("Generating test cases...")
     generate_tests()
 
-    for (test_name, test_params) in test_to_be_run:
-        fact_buffer.clear()
-        bi_buffer.clear()
+    logging.debug("tests to be run: %s", test_to_be_run)
+    for test_name, test_params in test_to_be_run:
+        print()
         print(test_name)
         print("Function\tRuntime [s]")
         for func in functions_to_be_tested:
-            start = time.process_time()
-            for (x, y) in test_params:
-                bi = func(x, y)
-                assert(results[(x, y)] == bi)
-            duration = time.process_time() - start
-            print("{}\t{:.5f}".format(func.__name__, duration))
+            fact_buffer.clear()
+            bi_buffer.clear()
+            sparse_fact_buffer.clear()
+            try:
+                print(func.__name__, end="\t")
+                start = time.process_time()
+                for (x, y) in test_params:
+                    bi = func(x, y)
+                    assert(results[(x, y)] == bi)
+                duration = time.process_time() - start
+                print("{:.5f}".format(duration))
+            except MemoryError:
+                print("out of memory")
 
 
 if __name__ == "__main__":
