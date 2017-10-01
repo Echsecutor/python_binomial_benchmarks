@@ -1,5 +1,6 @@
-"""
-This module computes binomial coefficient in various ways to determine the most efficient method (fastest) in python.
+"""This module computes binomial coefficient in various ways to
+determine the most efficient method (fastest) in python.
+
 """
 
 from math import factorial
@@ -25,7 +26,9 @@ def py_direct(x, y):
 functions_to_be_tested.append(py_direct)
 
 
-bi_buffer = {0: [1, ], 1: [1, ], 2: [1, 2, ]}
+bi_buffer = {}
+"""buffering computed binomial coefficients, like {0: [1, ], 1: [1, ],
+2: [1, 2, ]}"""
 
 
 def py_buffer(x, y):
@@ -60,12 +63,15 @@ def math_fact(x, y):
 functions_to_be_tested.append(math_fact)
 
 
-fact_buffer = {0: 1}
+fact_buffer = {}
+"""buffering factorials like {0: 1, 1: 1, 2: 2, 3: 6, }"""
 
 
 def buffered_factorial(x):
     if x in fact_buffer.keys():
         return fact_buffer[x]
+    if not fact_buffer:
+        fact_buffer[0] = 1
     closest = max(z for z in fact_buffer.keys() if z <= x)
     fact = fact_buffer[closest]
     while(closest < x):
@@ -78,30 +84,56 @@ def buffered_factorial(x):
 def buf_fact(x, y):
     if y > x or y < 0:
         return 0
-    return buffered_factorial(x) // (buffered_factorial(y) * buffered_factorial(x - y))
+    return buffered_factorial(x) // (buffered_factorial(y)
+                                     * buffered_factorial(x - y))
 
 
 functions_to_be_tested.append(buf_fact)
 
 
-def main():
-    n_test_points = 10000
-    results = {}
+test_to_be_run = []
+results = {}
+
+
+def generate_tests():
+
+    n = 10**4
+    k = 5 * 10**3
+    test_to_be_run.append(("Single evaluation 10^4",
+                           [(n, k)]))
+    results[(n, k)] = math_fact(n, k)
+
+    n = 10**5
+    k = 5 * 10**4
+    test_to_be_run.append(("Single evaluation 10^5",
+                           [(n, k)]))
+    results[(n, k)] = math_fact(n, k)
+
     test_params = []
+    n_test_points = 10000
     for i in range(n_test_points):
         n = randint(10, 1000)
         k = randint(1, n)
         test_params.append((n, k))
         results[(n, k)] = math_fact(n, k)
+    test_to_be_run.append(("{} evaluations of order 10^3".format(
+        n_test_points, test_params)))
 
-    print("Function\tRuntime [s]")
-    for func in functions_to_be_tested:
-        start = time.process_time()
-        for (x, y) in test_params:
-            bi = func(x, y)
-            assert(results[(x, y)] == bi)
-        duration = time.process_time() - start
-        print("{}\t{:.5f}".format(func.__name__, duration))
+
+def main():
+    print("Generating test cases...")
+    generate_tests()
+
+    for (test_name, test_params) in test_to_be_run:
+        print(test_name)
+        print("Function\tRuntime [s]")
+        for func in functions_to_be_tested:
+            start = time.process_time()
+            for (x, y) in test_params:
+                bi = func(x, y)
+                assert(results[(x, y)] == bi)
+            duration = time.process_time() - start
+            print("{}\t{:.5f}".format(func.__name__, duration))
 
 
 if __name__ == "__main__":
