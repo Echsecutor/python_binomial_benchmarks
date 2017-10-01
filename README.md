@@ -3,7 +3,7 @@ What is the fastest way to compute binomial coefficients in python3?
 
 ## Benchmarks ouput:
 
-On some Machine:
+On some Machine (Ubuntu 16.04.3 (Xenial), Linux 4.4.0-96-generic, x86_64) running python 3.5.2:
 
     1 evaluations of order 1000
     Function        Runtime [s]
