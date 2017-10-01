@@ -124,41 +124,30 @@ functions_to_be_tested.append(sparse_buf_fact)
 
 test_to_be_run = []
 results = {}
+check_results = True
+
+
+def add_test(n_test_points=1000, lo=10, hi=1000):
+    test_params = []
+    for i in range(n_test_points):
+        n = randint(lo, hi)
+        k = randint(1, n)
+        test_params.append((n, k))
+        if check_results:
+            results[(n, k)] = sparse_buf_fact(n, k)
+    test_to_be_run.append(("{} evaluations of order {}".format(
+        n_test_points, hi), test_params))
 
 
 def generate_tests():
 
-    n = 10**4
-    k = 5 * 10**3
-    test_to_be_run.append(("Single evaluation 10^4",
-                           [(n, k)]))
-    results[(n, k)] = math_fact(n, k)
+    add_test(1, 10**3, 10**3)
+    add_test(1, 10**4, 10**4)
+    add_test(1, 10**5, 10**5)
 
-    n = 10**5
-    k = 5 * 10**4
-    test_to_be_run.append(("Single evaluation 10^5",
-                           [(n, k)]))
-    results[(n, k)] = math_fact(n, k)
-
-    n_test_points = 10000
-    test_params = []
-    for i in range(n_test_points):
-        n = randint(10, 1000)
-        k = randint(1, n)
-        test_params.append((n, k))
-        results[(n, k)] = sparse_buf_fact(n, k)
-    test_to_be_run.append(("{} evaluations of order 10^3".format(
-        n_test_points), test_params))
-
-    n_test_points = 1000
-    test_params.clear()
-    for i in range(n_test_points):
-        n = randint(1000, 10**4)
-        k = randint(1, n)
-        test_params.append((n, k))
-        results[(n, k)] = sparse_buf_fact(n, k)
-    test_to_be_run.append(("{} evaluations of order 10^4".format(
-        n_test_points), test_params))
+    add_test(10**3, 10, 10**3)
+    add_test(10**3, 10**2, 10**4)
+    add_test(10**2, 10**2, 10**5)
 
 
 def main():
@@ -185,7 +174,8 @@ def main():
                 start = time.process_time()
                 for (x, y) in test_params:
                     bi = func(x, y)
-                    assert(results[(x, y)] == bi)
+                    if check_results:
+                        assert(results[(x, y)] == bi)
                 duration = time.process_time() - start
                 print("{:.5f}".format(duration))
             except MemoryError:
