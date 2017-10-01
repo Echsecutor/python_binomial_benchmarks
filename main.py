@@ -5,6 +5,7 @@ determine the most efficient method (fastest) in python.
 
 from math import factorial
 from random import randint
+import resource
 import time
 
 functions_to_be_tested = []
@@ -18,7 +19,6 @@ def py_direct(x, y):
     y = min(y, x - y)
     for z in range(y):
         answer *= (x - z)
-    for z in range(y):
         answer //= (z + 1)
     return answer
 
@@ -63,21 +63,21 @@ def math_fact(x, y):
 functions_to_be_tested.append(math_fact)
 
 
-fact_buffer = {}
-"""buffering factorials like {0: 1, 1: 1, 2: 2, 3: 6, }"""
+fact_buffer = []
+"""buffering factorials like [1, 1, 2, 6, ]"""
 
 
 def buffered_factorial(x):
-    if x in fact_buffer.keys():
+    if x < len(fact_buffer):
         return fact_buffer[x]
     if not fact_buffer:
-        fact_buffer[0] = 1
-    closest = max(z for z in fact_buffer.keys() if z <= x)
+        fact_buffer.append(1)
+    closest = len(fact_buffer) - 1
     fact = fact_buffer[closest]
     while(closest < x):
         closest += 1
         fact *= closest
-        fact_buffer[closest] = fact
+        fact_buffer.append(fact)
     return fact
 
 
@@ -121,10 +121,15 @@ def generate_tests():
 
 
 def main():
+    soft, hard = 10**9, 2 * 10**9
+    resource.setrlimit(resource.RLIMIT_AS, (soft, hard))
+
     print("Generating test cases...")
     generate_tests()
 
     for (test_name, test_params) in test_to_be_run:
+        fact_buffer.clear()
+        bi_buffer.clear()
         print(test_name)
         print("Function\tRuntime [s]")
         for func in functions_to_be_tested:
